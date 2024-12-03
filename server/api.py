@@ -6,7 +6,6 @@ todo = FastAPI()
 
 client = MongoClient("mongodb://localhost:27017/")
 
-# Access the 'todo' database
 db = client["todo"]
 collection = db["todo"]
 
@@ -23,28 +22,54 @@ async def index():
 
 @todo.get("/gettodo")
 async def get_todo():
-    pass
+    try:
+        items = list(collection.find({}, {"_id": 0})) 
+        return items
+    
+    except:
+        return "getting unsuccessful"
+    
 
-
-@todo.get("/createtodo")
+@todo.post("/createtodo")
 async def create_todo(todo_item: TodoItem):
-    # Data to insert
     todo_item = {
-        "id": 1,  # or generate a unique ID
-        "added_time": "2024-12-03T10:00:00Z",  # ISO format for added time
-        "content": "Buy groceries",
-        "last_update_time": "2024-12-03T10:30:00Z"  # ISO format for last update time
+        "id": todo_item.id,  
+        "added_time": todo_item.added_time,
+        "content": todo_item.content,
+        "last_update_time": todo_item.last_update_time  
     }
 
-    # Insert the document into the 'todo' collection
-    result = collection.insert_one(todo_item)
+    try:
+        collection.insert_one(todo_item)
+        return "Creation successful"
+    except:
+        return "Creation unsuccessful"
+    
 
 
-@todo.get("/updatetodo")
-async def update_todo():
-    pass
+@todo.put("/updatetodo")
+async def update_todo(item: TodoItem):
+    filter = {"id": item.id}
+    update = {
+        "$set": {
+            "content": item.content,
+            "added_time": item.added_time,
+            "last_update_time": item.last_update_time,
+        }
+    }
+    try:
+        collection.update_one(filter, update)
+        return "update successful"
+    except:
+        return "update unsuccessfull"
 
 
-@todo.get("/deletetodo")
-async def delete_todo():
-    pass
+@todo.delete("/deletetodo")
+async def delete_todo(item: TodoItem):
+    delete_filter = {"id": item.id}
+    try:
+        collection.delete_one(delete_filter)
+        return "deletion successful"
+    except:
+        return "deletion unsuccessful"
+
